@@ -28,6 +28,28 @@ export class Movie {
     return buffer.slice(0, this.borshInstructionSchema.getSpan(buffer));
   }
 
+  static borshAccountSchema = borsh.struct([
+    borsh.bool("initialized"),
+    borsh.u8("rating"),
+    borsh.str("title"),
+    borsh.str("description"),
+  ]);
+
+  static deserialize(buffer?: Buffer): Movie | null {
+    if (!buffer) {
+      return null;
+    }
+
+    try {
+      const { title, rating, description } =
+        this.borshAccountSchema.decode(buffer);
+      return new Movie(title, rating, description);
+    } catch (error) {
+      console.log("Deserialization error:", error);
+      return null;
+    }
+  }
+
   static mocks: Movie[] = [
     new Movie(
       "The Shawshank Redemption",
@@ -51,4 +73,3 @@ export class Movie {
     ),
   ];
 }
-
