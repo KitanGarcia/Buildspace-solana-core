@@ -5,9 +5,12 @@ import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import NavBar from "../components/NavBar";
 import Disconnected from "../components/Disconnected";
+import Connected from "../components/Connected";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const Home: NextPage = () => {
-  const connected = false;
+  const { connected } = useWallet();
+
   return (
     <div className={styles.container}>
       <Head>
@@ -30,7 +33,7 @@ const Home: NextPage = () => {
           <Spacer />
           <Center>
             {/*If connected, show 2nd view. Otherwise, 1st*/}
-            {!connected && <Disconnected />}
+            {connected ? <Connected /> : <Disconnected />}
           </Center>
           <Spacer />
           <Center>
