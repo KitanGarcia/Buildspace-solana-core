@@ -3,8 +3,11 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
+import NavBar from "../components/NavBar";
+import Disconnected from "../components/Disconnected";
 
 const Home: NextPage = () => {
+  const connected = false;
   return (
     <div className={styles.container}>
       <Head>
@@ -19,13 +22,16 @@ const Home: NextPage = () => {
       <Box
         w="full"
         h="calc(100vh)"
-        bgImage={"url(/home-background.svg)"}
+        bgImage={connected ? "" : "url(/home-background.svg)"}
         backgroundPosition="center"
       >
         <Stack w="full" h="calc(100vh)" justify="center">
-          {/*Navbar*/}
+          <NavBar />
           <Spacer />
-          <Center>{/*If connected, show 2nd view. Otherwise, 1st*/}</Center>
+          <Center>
+            {/*If connected, show 2nd view. Otherwise, 1st*/}
+            {!connected && <Disconnected />}
+          </Center>
           <Spacer />
           <Center>
             <Box marginBottom={4} color="white">
