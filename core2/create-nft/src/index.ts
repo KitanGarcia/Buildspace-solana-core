@@ -14,7 +14,30 @@ const tokenName = "Token Name";
 const description = "Description";
 const symbol = "SYMBOL";
 const sellerFeeBasisPoints = 100;
-const imageFile = "test.png";
+//const imageFile = "test.png";
+const imageFile = "test2.png";
+
+const updateNft = async (
+  metaplex: Metaplex,
+  uri: string,
+  mintAddress: PublicKey
+) => {
+  // Get "NFTWithToken" type from mint address
+  const nft = await metaplex.nfts().findByMint({ mintAddress });
+
+  // Note: omit any fields here to keep unchanged
+  await metaplex.nfts().update({
+    nftOrSft: nft,
+    name: tokenName,
+    symbol: symbol,
+    uri: uri,
+    sellerFeeBasisPoints: sellerFeeBasisPoints,
+  });
+
+  console.log(
+    `Token Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`
+  );
+};
 
 const createNft = async (
   metaplex: Metaplex,
@@ -52,7 +75,7 @@ async function main() {
     );
 
   // File to buffer
-  const buffer = fs.readFileSync(`src/${imageFile}`);
+  const buffer = fs.readFileSync(`src/assets/${imageFile}`);
 
   // Buffer to metaplex file
   const file = toMetaplexFile(buffer, imageFile);
@@ -70,7 +93,13 @@ async function main() {
 
   console.log("Metadata uri:", uri);
 
-  await createNft(metaplex, uri);
+  //await createNft(metaplex, uri);
+
+  // Get mint address from nft.address.toString() from createNft()
+  const mintAddress = new PublicKey(
+    "A2D7jmAK2vrLsns8MRasTsdgaqo5Xxj2V3ZowmcAaype"
+  );
+  await updateNft(metaplex, uri, mintAddress);
 }
 
 main()
