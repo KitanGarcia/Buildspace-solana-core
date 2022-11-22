@@ -1,7 +1,10 @@
 {
   "price": 0.3,
   "number": 10,
-  "gatekeeper": null,
+  "gatekeeper": {
+    "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
+    "expireOnUse": true
+  },
   "creators": [
     {
       "address": "DGb1tA7uNc7ycntUtj5wGuCF9PsF4SdagW7YpobTqxJy",
@@ -13,7 +16,12 @@
   "splToken": null,
   "goLiveDate": "2022-11-21T23:04:56.072009264+00:00",
   "endSettings": null,
-  "whitelistMintSettings": null,
+  "whitelistMintSettings": {
+    "mode": "burnEveryTime",
+    "mint": "FWhVgc7YgTSvK9KGCiRTPxNg3BiHrDy7enuutjvwVhHB",
+    "presale": true,
+    "discountPrice": null
+  },
   "hiddenSettings": null,
   "freezeTime": null,
   "uploadMethod": "bundlr",
@@ -26,3 +34,4 @@
   "shdwStorageAccount": null,
   "pinataConfig": null
 }
+
