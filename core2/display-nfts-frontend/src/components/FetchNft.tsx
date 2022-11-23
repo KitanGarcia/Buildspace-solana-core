@@ -18,8 +18,7 @@ export const FetchNft: FC = () => {
     // fetch NFTs for connected wallet
     const nfts = await metaplex
       .nfts()
-      .findAllByOwner({ owner: wallet.publicKey })
-      .run();
+      .findAllByOwner({ owner: wallet.publicKey });
 
     // Fetch off chain metadata for each NFT
     let nftData = [];
