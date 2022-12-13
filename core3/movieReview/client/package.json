@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
+    "challenge": "ts-node src/challenge.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
