@@ -37,5 +37,3 @@ struct MovieReviewPayload {
     rating: u8,
     description: String
 }
-
-

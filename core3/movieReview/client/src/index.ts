@@ -101,7 +101,7 @@ async function main() {
   await airdropSolIfNeeded(signer, connection);
 
   const movieProgramId = new web3.PublicKey(
-    "FUELe1uzArkYwJ51dQ4oWD2ffDRKLqqMQ6K9JCnYKfTL"
+    "5SFi3NtQa2HrQGzeSdjdHnZCYYouTJuUUYfhDS9Yx1aq"
   );
   await sendTestMovieReview(signer, movieProgramId, connection);
 }
@@ -115,4 +115,3 @@ main()
     console.log(error);
     process.exit(1);
   });
-
