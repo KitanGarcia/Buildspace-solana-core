@@ -620,7 +620,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "movieReviewComments"
+name = "movie-review-comments"
 version = "0.1.0"
 dependencies = [
  "borsh",

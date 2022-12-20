@@ -49,7 +49,7 @@ impl MovieInstruction {
                     description: payload.description
                 }
             }
-            1 =2 {
+            2 => {
                 // Comment payload uses its own deserializer because of the different data type
                 let payload = CommentPayload::try_from_slice(rest).unwrap();
                 Self::AddComment {
