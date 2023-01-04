@@ -9,18 +9,18 @@ import {
   ModalBody,
   Stack,
   FormControl,
-} from "@chakra-ui/react"
-import { FC, useState } from "react"
-import * as anchor from "@project-serum/anchor"
-import { getAssociatedTokenAddress } from "@solana/spl-token"
-import { CommentList } from "./CommentList"
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { useWorkspace } from "../context/Anchor"
+} from "@chakra-ui/react";
+import { FC, useState } from "react";
+import * as anchor from "@project-serum/anchor";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
+import { CommentList } from "./CommentList";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWorkspace } from "../context/Anchor";
 
 interface ReviewDetailProps {
-  isOpen: boolean
-  onClose: any
-  movie: any
+  isOpen: boolean;
+  onClose: any;
+  movie: any;
 }
 
 export const ReviewDetail: FC<ReviewDetailProps> = ({
@@ -28,12 +28,59 @@ export const ReviewDetail: FC<ReviewDetailProps> = ({
   onClose,
   movie,
 }: ReviewDetailProps) => {
-  const [comment, setComment] = useState("")
-  const { connection } = useConnection()
-  const { publicKey, sendTransaction } = useWallet()
-  const { program } = useWorkspace()
+  const [comment, setComment] = useState("");
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  const { program } = useWorkspace();
 
-  const handleSubmit = async (event: any) => {}
+  const handleSubmit = async (event: any) => {
+    event.preventDefault();
+
+    if (!publicKey || !program) {
+      alert("Please connect your wallet!");
+      return;
+    }
+
+    const movieReview = new anchor.web3.PublicKey(movie.publicKey);
+    const [movieReviewCounterPDA] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from("counter"), movieReview.toBuffer()],
+        program.programId
+      );
+
+    const [mintPDA] = await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from("mint")],
+      program.programId
+    );
+
+    const tokenAddress = await getAssociatedTokenAddress(mintPDA, publicKey);
+
+    const transaction = new anchor.web3.Transaction();
+
+    const instruction = await program.methods
+      .addComment(comment)
+      .accounts({
+        movieReview: movieReview,
+        movieCommentCounter: movieReviewCounterPDA,
+        tokenAccount: tokenAddress,
+      })
+      .instruction();
+
+    transaction.add(instruction);
+
+    try {
+      let txId = await sendTransaction(transaction, connection);
+      alert(
+        `Transaction submitted: https://explorer.solana.com/tx/${txId}?cluster=devnet`
+      );
+      console.log(
+        `Transaction submitted: https://explorer.solana.com/tx/${txId}?cluster=devnet`
+      );
+    } catch (error) {
+      alert(JSON.stringify(error));
+      console.log(JSON.stringify(error));
+    }
+  };
 
   return (
     <div>
@@ -69,5 +116,5 @@ export const ReviewDetail: FC<ReviewDetailProps> = ({
         </ModalContent>
       </Modal>
     </div>
-  )
-}
+  );
+};
