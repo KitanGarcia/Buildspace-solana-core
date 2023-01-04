@@ -8,7 +8,6 @@ import {
 import { MovieReview, IDL } from "./movie_review";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
-//@ts-ignore
 import MockWallet from "./MockWallet";
 
 const WorkspaceContext = createContext({});
