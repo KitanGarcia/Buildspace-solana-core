@@ -4,7 +4,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use mpl_token_metadata::instruction::create_metadata_accounts_v2;
 
-declare_id!("33jyik6pY4TscDxFdeVsuHSLN2zpu6JNyPjm2AuqM9L5");
+declare_id!("G4LM8Hm9jx29eYBi7cgoJ8pPjGsEGSv21CTirRCtndo3");
 
 #[program]
 pub mod movie_review {
@@ -22,7 +22,7 @@ pub mod movie_review {
         msg!("Rating: {}", rating);
 
         if rating > 5 || rating < 1 {
-            msg!("Rating cannot be higher than 5");
+            msg!("Rating must be between 1 and 5");
             return err!(ErrorCode::InvalidRating);
         }
 
@@ -32,7 +32,7 @@ pub mod movie_review {
         movie_review.rating = rating;
         movie_review.description = description;
 
-        msg!("Movie Comment Counter Account Created");
+        msg!("Movie Comment Counter Account created");
         let movie_comment_counter = &mut ctx.accounts.movie_comment_counter;
         movie_comment_counter.counter = 0;
         msg!("Counter: {}", movie_comment_counter.counter);
@@ -52,11 +52,88 @@ pub mod movie_review {
         );
 
         token::mint_to(cpi_ctx, 10000000)?;
-        msg!("Minted Tokens");
+        msg!("Minted tokens");
         Ok(())
     }
 
-    pub fn add_comment(ctx: Context<AddComment>, comment: String) -> Result<()> {
+    pub fn update_movie_review(
+        ctx: Context<UpdateMovieReview>,
+        title: String,
+        description: String,
+        rating: u8,
+    ) -> Result<()> {
+        msg!("Updating Movie Review Account");
+        msg!("Title: {}", title);
+        msg!("Description: {}", description);
+        msg!("Rating: {}", rating);
+
+        if rating > 5 || rating < 1 {
+            msg!("Rating must be between 1 and 5");
+            return err!(ErrorCode::InvalidRating);
+        }
+
+        let movie_review = &mut ctx.accounts.movie_review;
+        movie_review.rating = rating;
+        movie_review.description = description;
+
+        Ok(())
+    }
+
+    pub fn close(_ctx: Context<Close>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn create_reward_mint(
+        ctx: Context<CreateTokenReward>,
+        uri: String,
+        name: String,
+        symbol: String
+    ) -> Result<()> {
+        msg!("Create reward token");
+
+        let seeds = &["mint".as_bytes(), &[*ctx.bumps.get("reward_mint").unwrap()]];
+        let signer = [&seeds[..]];
+
+        let account_info = vec![
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.reward_mint.to_account_info(),
+            ctx.accounts.user.to_account_info(),
+            ctx.accounts.token_metadata_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ];
+
+        // Make cross program invocation to create_metadata_accounts_v2
+        invoke_signed(
+            &create_metadata_accounts_v2(
+                ctx.accounts.token_metadata_program.key(),
+                ctx.accounts.metadata.key(),
+                ctx.accounts.reward_mint.key(),
+                ctx.accounts.reward_mint.key(),
+                ctx.accounts.user.key(),
+                ctx.accounts.user.key(),
+                name,
+                symbol,
+                uri,
+                None,
+                0,
+                true,
+                true,
+                None,
+                None
+            ),
+            account_info.as_slice(),
+            &signer,
+        )?;
+
+        Ok(())
+    }
+
+    pub fn add_comment(
+        ctx: Context<AddComment>,
+        comment: String,
+    ) -> Result<()> {
         msg!("Comment Account Created");
         msg!("Comment: {}", comment);
 
@@ -89,82 +166,6 @@ pub mod movie_review {
 
         Ok(())
     }
-
-    pub fn update_movie_review(
-        ctx: Context<UpdateMovieReview>,
-        title: String,
-        description: String,
-        rating: u8,
-    ) -> Result<()> {
-        msg!("Updating Movie Review Account");
-        msg!("Title: {}", title);
-        msg!("Description: {}", description);
-        msg!("Rating: {}", rating);
-
-        if rating > 5 || rating < 1 {
-            msg!("Rating cannot be higher than 5");
-            return err!(ErrorCode::InvalidRating);
-        }
-
-        let movie_review = &mut ctx.accounts.movie_review;
-        movie_review.rating = rating;
-        movie_review.description = description;
-
-        Ok(())
-    }
-
-    // TODO: edit
-    pub fn close(_ctx: Context<Close>) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn create_reward_mint(
-        ctx: Context<CreateTokenReward>,
-        uri: String,
-        name: String,
-        symbol: String,
-    ) -> Result<()> {
-        msg!("Create Reward Token");
-
-        let seeds = &["mint".as_bytes(), &[*ctx.bumps.get("reward_mint").unwrap()]];
-
-        let signer = [&seeds[..]];
-
-        let account_info = vec![
-            ctx.accounts.metadata.to_account_info(),
-            ctx.accounts.reward_mint.to_account_info(),
-            ctx.accounts.reward_mint.to_account_info(),
-            ctx.accounts.user.to_account_info(),
-            ctx.accounts.token_metadata_program.to_account_info(),
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.system_program.to_account_info(),
-            ctx.accounts.rent.to_account_info(),
-        ];
-
-        invoke_signed(
-            &create_metadata_accounts_v2(
-                ctx.accounts.token_metadata_program.key(),
-                ctx.accounts.metadata.key(),
-                ctx.accounts.reward_mint.key(),
-                ctx.accounts.reward_mint.key(),
-                ctx.accounts.user.key(),
-                ctx.accounts.user.key(),
-                name,
-                symbol,
-                uri,
-                None,
-                0,
-                true,
-                true,
-                None,
-                None,
-            ),
-            account_info.as_slice(),
-            &signer,
-        )?;
-
-        Ok(())
-    }
 }
 
 #[derive(Accounts)]
@@ -178,6 +179,7 @@ pub struct AddMovieReview<'info> {
         space = 8 + 32 + 1 + 4 + title.len() + 4 + description.len()
     )]
     pub movie_review: Account<'info, MovieAccountState>,
+
     #[account(
         init,
         seeds = ["counter".as_bytes(), movie_review.key().as_ref()],
@@ -186,49 +188,14 @@ pub struct AddMovieReview<'info> {
         space = 8 + 8
     )]
     pub movie_comment_counter: Account<'info, MovieCommentCounter>,
-    #[account(mut,
-        seeds = ["mint".as_bytes().as_ref()],
-        bump
-    )]
-    pub reward_mint: Account<'info, Mint>,
-    #[account(
-        init_if_needed,
-        payer = initializer,
-        associated_token::mint = reward_mint,
-        associated_token::authority = initializer
-    )]
-    pub token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub initializer: Signer<'info>,
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub rent: Sysvar<'info, Rent>,
-    pub system_program: Program<'info, System>,
-}
 
-#[derive(Accounts)]
-#[instruction(comment:String)]
-pub struct AddComment<'info> {
-    #[account(
-        init,
-        seeds = [movie_review.key().as_ref(), &movie_comment_counter.counter.to_le_bytes()],
-        bump,
-        payer = initializer,
-        space = 8 + 32 + 32 + 4 + comment.len() + 8
-    )]
-    pub movie_comment: Account<'info, MovieComment>,
-    pub movie_review: Account<'info, MovieAccountState>,
     #[account(
         mut,
-        seeds = ["counter".as_bytes(), movie_review.key().as_ref()],
-        bump,
-    )]
-    pub movie_comment_counter: Account<'info, MovieCommentCounter>,
-    #[account(mut,
-        seeds = ["mint".as_bytes().as_ref()],
+        seeds = ["mint".as_bytes()],
         bump
     )]
     pub reward_mint: Account<'info, Mint>,
+
     #[account(
         init_if_needed,
         payer = initializer,
@@ -236,6 +203,7 @@ pub struct AddComment<'info> {
         associated_token::authority = initializer
     )]
     pub token_account: Account<'info, TokenAccount>,
+    
     #[account(mut)]
     pub initializer: Signer<'info>,
     pub token_program: Program<'info, Token>,
@@ -261,25 +229,15 @@ pub struct UpdateMovieReview<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// TODO: edit
-#[derive(Accounts)]
-pub struct Close<'info> {
-    #[account(mut, close = reviewer, has_one = reviewer)]
-    movie_review: Account<'info, MovieAccountState>,
-    #[account(mut)]
-    reviewer: Signer<'info>,
-}
-
 #[derive(Accounts)]
 pub struct CreateTokenReward<'info> {
     #[account(
         init,
-        seeds = ["mint".as_bytes().as_ref()],
+        seeds = ["mint".as_bytes()],
         bump,
         payer = user,
         mint::decimals = 6,
-        mint::authority = reward_mint,
-
+        mint::authority = reward_mint
     )]
     pub reward_mint: Account<'info, Mint>,
 
@@ -292,8 +250,54 @@ pub struct CreateTokenReward<'info> {
     /// CHECK:
     #[account(mut)]
     pub metadata: AccountInfo<'info>,
-    /// CHECK:
+    /// CHECK
     pub token_metadata_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(comment: String)]
+pub struct AddComment<'info> {
+    #[account(
+        init,
+        seeds = [movie_review.key().as_ref(), &movie_comment_counter.counter.to_le_bytes()],
+        bump,
+        payer = initializer,
+        space = 8 + 32 + 32 + 4 + comment.len() + 8
+    )]
+    pub movie_comment: Account<'info, MovieComment>,
+    pub movie_review: Account<'info, MovieAccountState>,
+    #[account(
+        mut,
+        seeds = ["counter".as_bytes(), movie_review.key().as_ref()],
+        bump,
+    )]
+    pub movie_comment_counter: Account<'info, MovieCommentCounter>,
+    #[account(mut,
+        seeds = ["mint".as_bytes()],
+        bump
+    )]
+    pub reward_mint: Account<'info, Mint>,
+    #[account(
+        init_if_needed,
+        payer = initializer,
+        associated_token::mint = reward_mint,
+        associated_token::authority = initializer
+    )]
+    pub token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Close<'info> {
+    #[account(mut, close = reviewer, has_one = reviewer)]
+    movie_review: Account<'info, MovieAccountState>,
+    #[account(mut)]
+    reviewer: Signer<'info>,
 }
 
 #[account]
@@ -305,11 +309,6 @@ pub struct MovieAccountState {
 }
 
 #[account]
-pub struct MovieCommentCounter {
-    pub counter: u64,
-}
-
-#[account]
 pub struct MovieComment {
     pub review: Pubkey,    // 32
     pub commenter: Pubkey, // 32
@@ -317,8 +316,13 @@ pub struct MovieComment {
     pub count: u64,        // 8
 }
 
+#[account]
+pub struct MovieCommentCounter {
+    pub counter: u64,
+}
+
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Rating greater than 5 or less than 1")]
-    InvalidRating,
+    #[msg("Rating not between 1 and 5")]
+    InvalidRating
 }
