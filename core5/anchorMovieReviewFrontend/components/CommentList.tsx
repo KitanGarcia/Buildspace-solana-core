@@ -6,26 +6,45 @@ import {
   Stack,
   Box,
   Heading,
-} from "@chakra-ui/react"
-import { FC, useState, useEffect } from "react"
-import { useWorkspace } from "../context/Anchor"
+} from "@chakra-ui/react";
+import { FC, useState, useEffect } from "react";
+import { useWorkspace } from "../context/Anchor";
 
 interface CommentListProps {
-  movie: any
+  movie: any;
 }
 
 export const CommentList: FC<CommentListProps> = ({
   movie,
 }: CommentListProps) => {
-  const [page, setPage] = useState(1)
-  const [comments, setComments] = useState<any[]>([])
-  const [result, setResult] = useState<any[]>([])
-  const { program } = useWorkspace()
+  const [page, setPage] = useState(1);
+  const [comments, setComments] = useState<any[]>([]);
+  const [result, setResult] = useState<any[]>([]);
+  const { program } = useWorkspace();
 
   useEffect(() => {
-    const fetch = async () => {}
-    fetch()
-  }, [page])
+    const fetch = async () => {
+      if (program) {
+        const comments = await program.account.movieComment.all([
+          {
+            memcmp: {
+              offset: 8,
+              bytes: movie.publicKey.toBase58(),
+            },
+          },
+        ]);
+
+        const sort = [...comments].sort((a, b) =>
+          a.account.count > b.account.count ? 1 : -1
+        );
+        setComments(comments);
+
+        const filtered = sort.slice((page - 1) * 3, page * 3);
+        setResult(filtered);
+      }
+    };
+    fetch();
+  }, [page, program, movie.publicKey]);
 
   return (
     <div>
@@ -59,5 +78,5 @@ export const CommentList: FC<CommentListProps> = ({
         </Center>
       </Stack>
     </div>
-  )
-}
+  );
+};
