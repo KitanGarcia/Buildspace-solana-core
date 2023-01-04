@@ -1,5 +1,5 @@
-import { Card } from "./Card"
-import { FC, useEffect, useState } from "react"
+import { Card } from "./Card";
+import { FC, useEffect, useState } from "react";
 import {
   Button,
   Center,
@@ -7,51 +7,79 @@ import {
   Input,
   Spacer,
   Heading,
-} from "@chakra-ui/react"
-import { useWorkspace } from "../context/Anchor"
-import { useWallet } from "@solana/wallet-adapter-react"
-import { useDisclosure } from "@chakra-ui/react"
-import { ReviewDetail } from "./ReviewDetail"
+} from "@chakra-ui/react";
+import { useWorkspace } from "../context/Anchor";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useDisclosure } from "@chakra-ui/react";
+import { ReviewDetail } from "./ReviewDetail";
 
 export const MovieList: FC = () => {
-  const { program } = useWorkspace()
-  const [movies, setMovies] = useState<any | null>(null)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState("")
-  const [result, setResult] = useState<any | null>(null)
-  const [selectedMovie, setSelectedMovie] = useState<any | null>(null)
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const wallet = useWallet()
+  const { program } = useWorkspace();
+  const [movies, setMovies] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [result, setResult] = useState<any | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<any | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const wallet = useWallet();
 
-  const fetchMyReviews = async () => {}
+  const fetchMyReviews = async () => {
+    if (wallet.connected && program) {
+      const accounts =
+        (await program.account.movieAccountState.all([
+          {
+            memcmp: {
+              offset: 8,
+              bytes: wallet.publicKey!.toBase58(),
+            },
+          },
+        ])) ?? [];
+
+      const sort = [...accounts].sort((a, b) =>
+        a.account.title > b.account.title ? 1 : -1
+      );
+      setResult(sort);
+    } else {
+      alert("Please connect wallet!");
+    }
+  };
 
   useEffect(() => {
-    const fetchAccounts = async () => {}
-    fetchAccounts()
-  }, [])
+    const fetchAccounts = async () => {
+      if (program) {
+        const accounts = (await program.account.movieAccountState.all()) ?? [];
+
+        const sort = [...accounts].sort((a, b) =>
+          a.account.title > b.account.title ? 1 : -1
+        );
+        setMovies(sort);
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   useEffect(() => {
     if (movies && search != "") {
       const filtered = movies.filter((movie: any) => {
         return movie.account.title
           .toLowerCase()
-          .startsWith(search.toLowerCase())
-      })
-      setResult(filtered)
+          .startsWith(search.toLowerCase());
+      });
+      setResult(filtered);
     }
-  }, [search])
+  }, [search]);
 
   useEffect(() => {
     if (movies && search == "") {
-      const filtered = movies.slice((page - 1) * 3, page * 3)
-      setResult(filtered)
+      const filtered = movies.slice((page - 1) * 3, page * 3);
+      setResult(filtered);
     }
-  }, [page, movies, search])
+  }, [page, movies, search]);
 
   const handleReviewSelected = (data: any) => {
-    setSelectedMovie(data)
-    onOpen()
-  }
+    setSelectedMovie(data);
+    onOpen();
+  };
 
   return (
     <div>
@@ -77,16 +105,16 @@ export const MovieList: FC = () => {
       {result && (
         <div>
           {Object.keys(result).map((key) => {
-            const data = result[key as unknown as number]
+            const data = result[key as unknown as number];
             return (
               <Card
                 key={key}
                 movie={data}
                 onClick={() => {
-                  handleReviewSelected(data)
+                  handleReviewSelected(data);
                 }}
               />
-            )
+            );
           })}
         </div>
       )}
@@ -104,5 +132,5 @@ export const MovieList: FC = () => {
         )}
       </Center>
     </div>
-  )
-}
+  );
+};
